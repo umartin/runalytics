@@ -1,0 +1,3 @@
+select st_length(st_transform(st_makeline(array_agg(st_setsrid(st_point((xpath('//@lon', trkpt))[1]::text::float, (xpath('//@lat', trkpt))[1]::text::float), 4326))),3021)) from (select unnest(xpath('/a:gpx/a:trk/a:trkseg/a:trkpt', data, array[array['a','http://www.topografix.com/GPX/1/1']])) as trkpt  from raw_gpx) as foo;
+;
+

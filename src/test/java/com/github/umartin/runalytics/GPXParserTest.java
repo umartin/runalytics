@@ -23,7 +23,8 @@ public class GPXParserTest {
 			assertEquals(57.703038000D, activity.trackpoints.get(0).latitude, 0.1D);
 			assertEquals(Instant.parse("2017-10-07T18:31:05Z"), activity.trackpoints.get(0).time);
 
-//			assertEquals(8080.0D, activity.distance, 100.0D);
+			assertEquals(8080.0D, activity.distance, 100.0D);
+			System.out.println("activity.distance" + activity.distance);
 		}
 	}
 }

@@ -1,11 +1,16 @@
 package com.github.umartin.runalytics;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -14,6 +19,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
+
+import com.vividsolutions.jts.geom.Point;
 
 
 public class GPXParser {
@@ -91,15 +98,31 @@ public class GPXParser {
 		}
 	}
 
-	static Activity parseFile(InputStream inputStream) throws Exception {
-		SAXParserFactory spf = SAXParserFactory.newInstance();
-		SAXParser saxParser = spf.newSAXParser();
-		XMLReader xmlReader = saxParser.getXMLReader();
+	static Activity parseFile(InputStream inputStream) {
+		try {
+			SAXParserFactory spf = SAXParserFactory.newInstance();
+			SAXParser saxParser = spf.newSAXParser();
+			XMLReader xmlReader = saxParser.getXMLReader();
+			
+			GPXContentHandler gpxContentHandler = new GPXContentHandler();
+			xmlReader.setContentHandler(gpxContentHandler);
+			xmlReader.parse(new InputSource(new BufferedInputStream(inputStream) {
+				@Override
+				public void close() throws IOException {
+					// do nothing. SAX-bug.
+				}
 
-		GPXContentHandler gpxContentHandler = new GPXContentHandler();
-		xmlReader.setContentHandler(gpxContentHandler);
-		xmlReader.parse(new InputSource(inputStream));
+			}));
 
-		return gpxContentHandler.activity;
+			List<Point> points = gpxContentHandler.activity.trackpoints.stream()
+					.map(trkpnt -> GeometryUtil.createWGS84Point(trkpnt.latitude, trkpnt.longitude))
+					.collect(Collectors.toList());
+			
+			gpxContentHandler.activity.distance = GeometryUtil.calculateDistanceMeters(points);
+
+			return gpxContentHandler.activity;
+		} catch (IOException | SAXException | ParserConfigurationException ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 }

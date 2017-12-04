@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Activity {
 
-	float distance;
+	double distance;
 	Instant time;
 	List<Trackpoint> trackpoints = new ArrayList<>();
 
